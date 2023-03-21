@@ -347,15 +347,6 @@ p + geom_hline(yintercept = 0.5, size = 1.4, color = "gray80") +
 
 
 
-
-
-
-
-
-
-
-
-
 #March 20th####
 
 
