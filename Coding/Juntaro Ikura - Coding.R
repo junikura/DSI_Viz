@@ -529,3 +529,227 @@ p4
 theme_set(theme_minimal())
 p4
 p4 + theme_economist()
+#March 23th####
+
+#Activity (Alt-text)
+
+#Two researcher'a in discussion 
+
+#Activity 2 (Descriptove content)
+
+#Level 1 - How brilliant people in past generations have organized their 24 hour day. 
+#Categories are sleep, creative work, day job/admin, food/leisure, exercise, and other  
+
+
+
+#Level 2- The average of how brilliant people in past generations have organized their day
+
+
+
+#Level 3- How longer hours of creative work along with sleeping earlier and waking up earlier have shaped the brilliant minds of past generations  
+
+
+
+#Level 4 -
+
+
+#https://www.rgd.ca/database/files/library/RGD_AccessAbility2_Handbook_2021_09_28.pdf
+#March 25th####
+
+library(tidyverse)
+library(socviz)
+library(ggplot2)
+library(gapminder)
+library(ggrepel)
+
+model_colors <- RColorBrewer::brewer.pal(3, "Set1")
+model_colors
+
+p0 <- ggplot(data = gapminder, mapping = aes(x = log(gdpPercap), y =
+                                           lifeExp))
+p1 <- p0 + geom_point(alpha = 0.2) +
+    geom_smooth(method = "lm", aes(color = "OLS", fill = "OLS")) +
+
+    geom_smooth(method = "lm", formula = y ~ splines::bs(x, df = 3),
+aes(color = "Cubic Spline", fill = "Cubic Spline")) +
+  
+  geom_smooth(method = "loess", aes(color = "LOESS", fill = "LOESS"))
+
+#Colour
+p1 + scale_color_manual(name = "Models", values =
+model_colors) + scale_fill_manual(name = "Models",
+values = model_colors) + theme(legend.position = "top")
+
+#Show legend
+p1 + scale_color_manual(name = "Models", values = model_colors) +
+scale_fill_manual(name = "Models", values = model_colors) +
+theme(legend.position = "top")
+
+#Gapminder model object
+out <- lm(formula = lifeExp ~ gdpPercap + pop +
+       continent, data = gapminder)
+
+str(out)                    
+
+
+min_gdp <- min(gapminder$gdpPercap)
+max_gdp <- max(gapminder$gdpPercap)
+med_pop <- median(gapminder$pop)
+pred_df <- expand.grid(
+          gdpPercap = (seq(from = min_gdp, to = max_gdp, length.out = 100)), 
+          pop = med_pop,
+          continent = c("Africa", "Americas", "Asia", "Europe", "Oceania"))
+
+#Making predictions
+pred_out <- predict(object = out, newdata = pred_df, interval = "predict")
+head(pred_out)
+
+#fit is predicted value
+
+#bind data and predictions 
+pred_df <- cbind(pred_df, pred_out)
+head(pred_df)
+
+#How does per capita GDP affect life expectacy in Europe and Africa 
+
+p <- ggplot(data = subset(pred_df, continent %in% c("Europe",
+  "Africa")), aes(x = gdpPercap, y = fit, ymin = lwr, ymax = upr, color
+  = continent, fill = continent, group = continent))
+                                                                   
+p + geom_point(data = subset(gapminder, continent %in% c("Europe",
+      "Africa")), aes(x = gdpPercap, y = lifeExp, color = continent), alpha
+      = 0.5, inherit.aes = FALSE) +
+      
+    geom_line() + geom_ribbon(alpha = 0.2, color = FALSE) +
+      scale_x_log10(labels = scales::dollar)
+
+#Activity - How does per capita GDP affect life expectancy in the America's? 
+
+p <- ggplot(data = subset(pred_df, continent %in% c("Americas","Asia")), 
+                  aes(x = gdpPercap, y = fit, ymin = lwr, ymax = upr, color
+                  = continent, fill = continent, group = continent))
+
+p + geom_point(data = subset(gapminder, continent %in% c("Americas", "Asia")), 
+               aes(x = gdpPercap, y = lifeExp, color = continent), alpha
+               = 0.5, inherit.aes = FALSE) +
+  
+  geom_line() + geom_ribbon(alpha = 0.2, color = FALSE) +
+  scale_x_log10(labels = scales::dollar)
+
+#Broom
+install.packages("broom")
+library(broom)
+library(tidyverse)
+library(ggplot2)
+
+out_conf <- tidy(out)
+
+#Component level statistics with tidy()
+
+
+library(dplyr)
+
+out_conf |> mutate_if(is.numeric, round, digits = 3)
+
+
+p <- ggplot(out_conf, mapping = aes(x = term, y = estimate))
+p + geom_point() + coord_flip()
+
+out_conf <- subset(out_conf, term %nin% "(Intercept)")
+out_conf$nicelabs <- prefix_strip(out_conf$term, "continent")
+
+#Component level statistics with tidy()
+p <- ggplot(out_conf, mapping = aes(x = reorder(nicelabs, estimate), y = estimate, ymin = conf.low, ymax = conf.high))
+
+p +geom_pointrange() + coord_flip() + labs(x = "", y = "OLS Estimate")
+
+#Component level statistics with tidy()
+
+p <- ggplot(out_conf, mapping = aes(x = reorder(nicelabs, estimate), y =
+                                   estimate, ymin = conf.low, ymax = conf.high))
+
+p + geom_pointrange() + coord_flip() + labs(x = "", y = "OLS Estimate")
+
+#Observation level statistics with augment()
+
+out_aug <- augment(out)
+head(out_aug) |> round_df()
+
+
+#Observation level statistics with augment()
+
+p <- ggplot(data = out_aug, mapping = aes(x = .fitted, y =
+                                         .resid))
+
+p + geom_point()
+
+#Observation level statistics with glance()
+
+glance(out) |> round_df()
+
+
+#Grouped analysis and list columns 
+
+eu77 <- gapminder |> filter(continent == "Europe", year == 1977)
+
+fit <- lm(lifeExp ~ log(gdpPercap), data = eu77)
+
+summary(fit)
+
+#Nesting data 
+
+out_le <- gapminder |>
+  group_by(continent, year) |
+  nest()
+out_le
+
+
+#Filtering and unnesting list columns 
+
+out_le |> filter(continent == "Europe" & year == 1977) unnest()
+
+
+#Nesting
+
+fit_ols <- function(df) {lm(lifeExp ~ log(gdpPercap), data = df)}
+out_le <- gapminder |>
+group_by(continent, year) |>
+  nest() |>
+  mutate(model = map(data, fit_ols))
+out_le
+
+
+#Nested and tidied data
+
+fit_ols <- function(df) { lm(lifeExp ~ log(gdpPercap), data = df)}
+
+out_tidy <- gapminder |>  group_by(continent, year) nest() |>
+  mutate(model = map(data, fit_ols), tidied = map(model, tidy)) |>
+  unnest( tidied) |> filter(term %nin% "(Intercept)" & continent %nin% "Oceania")
+
+#Plotting nested and tidied data 
+
+p <- ggplot(data = out_tidy, mapping = aes(x = year, y = estimate,
+                                        ymin = estimate - 2*std.error, ymax = estimate + 2*std.error, group
+                                        = continent, color = continent))
+
+p + geom_pointrange(position = position_dodge(width = 1)) +
+  scale_x_continuous(breaks = unique(gapminder$year)) +
+  theme(legend.position = "top") +
+  labs(x = "Year", y = "Estimate", color = "Continent")
+
+
+#Plotting nested and tidied data
+
+p <- ggplot(data = out_tidy, mapping = aes(x = year, y = estimate, ymin = estimate - 2*std.error, ymax
+                                        = estimate + 2*std.error, group = continent, color = continent))
+
+
+p + geom_pointrange(position = position_dodge(width = 1)) +
+                                          
+  scale_x_continuous(breaks = unique(gapminder$year)) +
+  theme(legend.position = "top") +
+  labs(x = "Year", y = "Estimate", color = "Continent")
+
+                            
+
