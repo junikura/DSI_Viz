@@ -753,3 +753,135 @@ p + geom_pointrange(position = position_dodge(width = 1)) +
 
                             
 
+
+#March 27th####
+
+Talk Question: That was an amazing talk! Just wondering in the CP research space, is the non-hereditary CP still widely studied? Im guessing the genetic component is much more hot and exciting to study, but just wondering about the non-hereditary
+
+
+#March 30th####
+
+#loading packages 
+library(ggplot2)
+library(ggthemes)
+library(ggrepel)
+library(tidyverse)
+library(socviz)
+
+#review data 
+election |> select(state, total_vote,
+                   r_points, pct_trump, party, census) |>
+  sample_n(5)
+
+
+#Denotes party colours
+party_colors <- c("#2E74C0", "#CB454A") 
+
+
+p0 <- ggplot(data = subset(election, st %nin% "DC"), mapping = aes(x = r_points, y = reorder(state, r_points), color = party))
+
+p1 <- p0 + geom_vline(xintercept = 0, color = "gray30") +
+  geom_point(size = 2)
+
+p2 <- p1 + scale_color_manual(values = party_colors)
+
+p3 <- p2 + scale_x_continuous(breaks = c( 30, 20, 10, 0, 10, 20, 30,
+                                      40), labels = c("30 n (Clinton)", "20", "10", "0", "10", "20", "30","40 n(Trump)"))
+
+p3 + facet_wrap(~ census, ncol=1, scales="free_y") +
+  guides(color=FALSE) + labs(x = "Point Margin", y = "") +
+  theme(axis.text=element_text(size=8))
+
+
+install.packages("maps")
+library(maps)
+us_states <- map_data("state")
+head(us_states)
+
+# Black and white map
+p <- ggplot(data = us_states, mapping = aes(x =long, y = lat, group = group))
+p + geom_polygon(fill = "white", color = "black")
+
+# Colouring map
+p <- ggplot(data = us_states, aes(x = long, y = lat, group = group, fill = region))
+p + geom_polygon(color = "gray90", linewidth = 0.1) + guides(fill = FALSE)
+
+#Adding lines
+p <- ggplot(data = us_states, mapping = aes(x = long, y = lat, group = group, fill = region))
+p + geom_polygon(color = "gray90", size = 0.1) +
+coord_map(projection = "albers", lat0 = 39, lat1 = 45) + guides(fill = FALSE)
+
+#Adding election data to map
+
+election$region <- tolower(election$state)
+us_states_elec <- left_join(us_states, election, by = "region")
+
+# Add data to map 
+
+p0 <- ggplot(data = us_states_elec, mapping = aes(x = long, y = lat,
+                                              group = group, fill = party))
+p1 <- p0 + geom_polygon(color = "gray90", size = 0.1) +
+  coord_map(projection = "albers", lat0 = 39, lat1 = 45)
+
+p2 <- p1 + scale_fill_manual(values = party_colors) +
+  labs(title = "Election Results 2016", fill = NULL)
+
+p2 + theme_map()
+
+
+#County map 
+
+county_map |>
+  sample_n(5)
+
+county_data |>
+  select(id, name, state, pop_dens) |>
+  sample_n(5)
+
+#Plotting population density 
+
+county_full <- left_join(county_map, county_data, by = "id")
+head(county_full)
+
+#Population density by county 
+
+p <- ggplot(data = county_full, mapping = aes(x = long, y = lat, fill = pop_dens, group =
+                         group))
+p1 <- p + geom_polygon(color = "gray90", size = 0.05) + coord_equal()
+
+p2 <- p1 + scale_fill_brewer(palette="Blues",
+            labels = c("0 10", "10 50", "50 100", "100 500", "500 1,000", "1,000 5,000", ">5,000"))
+
+p2 + labs(fill = "Population per\nsquare mile") +
+  
+  theme_map() +
+  
+  guides(fill = guide_legend(nrow = 1)) +
+  
+  theme(legend.position = "bottom")
+
+#new section
+#https://rich-iannone.github.io/DiagrammeR/graphviz_and_mermaid.html
+#https://kateto.net/netscix2016.html
+#https://www.jessesadler.com/post/network-analysis-with-r/
+
+install.packages("DiagrammeR")
+library(DiagrammeR)
+
+grViz(diagram = "digraph flowchart {
+  node [fontname = arial, shape = square, color = purple]
+  tab1 [label = '@@1']
+  tab2 [label = '@@2']
+  tab3 [label = '@@3']
+  tab4 [label = '@@4']
+  
+  tabs1 -> tab2 -> tab3 -> tab4; }
+
+  [1]: 'Artefact collection in field'
+  [2]: 'Preliminary daying of artefacts (visual)'
+  [3]: 'Artefacts sent to lab for dating'
+  [4]: 'Jun'
+  ") 
+
+
+
