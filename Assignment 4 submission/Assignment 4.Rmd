@@ -1,0 +1,112 @@
+---
+title: "Assignment 4"
+author: "Juntaro Ikura"
+date: "2023-03-28"
+output: pdf_document
+---
+install.packages("tidyverse")
+install.packages("ggplot2")
+install.packages("dplyer")
+install.packages("readr")
+install.packages("viridis")
+install.packages("ggrepel")
+install.packages("scales")
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(viridis)
+library(ggrepel)
+library(scales)
+
+getwd()
+str(ontpoppro)
+#importing file
+
+#Reading in the excel csv file
+ontpoppro <- read_csv("Ontario_pop_projection.csv")
+
+#Piping in the variables of choice
+ontpoppro <- ontpoppro |>
+  select(c("SCENARIO", "YEAR", "SEX", "TOTAL", "0 to 14", "15 to 64", "65 Plus")) |>
+  filter(YEAR %in% c(2021, 2035, 2046) & SEX %in% c('MALE', 'FEMALE'))
+
+#Putting variable to the age brackets
+ontpoppro <- ontpoppro |> pivot_longer('0 to 14':'65 Plus', names_to = "AgeGroup", values_to = "AgePop")
+
+#Putting variable to the basic aesthetics and denoting x and y values and legend
+ontpoppro_viz <- ggplot( data = ontpoppro, mapping = aes(x= YEAR, y = AgePop, fill = AgeGroup))
+
+
+ontpoppro_viz + 
+
+#Putting black border on bars
+geom_bar(stat = 'identity', color = "black", position= 'dodge', width = 10, alpha = 1.0) + 
+
+#Changing font on values above bars
+geom_text(aes(label = round(..y.., 2)),
+            fontface="bold",
+            angle = 90,
+            stat = "summary",
+            vjust = 1,
+            hjust = 1.0,
+            size = 4 ) +
+
+#Centering the title
+ggtitle("Ontario Population Projection from 2021 to 2046 Divided \n into Low-Growth and High-Grows Scenario and \n Broken Down by Sex") +
+
+#Wrapping each of the scenarios (REFERENCE, LOW-GROWTH, HIGH-GROWTH)  
+facet_wrap(~SCENARIO) +
+
+#Ordering the facet's from REFERENCE, LOW-GROWTH, and HIGH-GROWTH
+facet_grid(~factor(SCENARIO, levels=c('REFERENCE', 'LOW-GROWTH', 'HIGH-GROWTH'))) +
+
+#Labeling the X-values (2021, 2035, 2046) and "Year" below that
+scale_x_continuous (name = "Year", breaks = c(2021, 2035, 2046)) +
+
+#Putting comma on Y-axis label values
+scale_y_continuous(labels = comma) +
+
+#Changing legend title to "Age Group"
+scale_fill_discrete(name = "Age Group") +
+
+#Changing colour pallete of bars
+scale_color_viridis_d() +
+
+#Adjusting all the legend and axis title font's
+theme(axis.title.x = element_text(size = 12, face = "bold"),
+      axis.title.y = element_text(size = 12, face = "bold"),
+      axis.text.x = element_text(size = 10, face = "bold"),
+     axis.text.y = element_text(size = 10, face = "bold"),
+     strip.text.x = element_text(size = 10, face = "bold"),
+     legend.title = element_text(size=12, face = "bold"),
+     legend.text = element_text(size = 10, face = "bold"),
+     plot.title = element_text(hjust = 0.5)) +
+
+#Labeling x and y labels and duplicate title
+labs(title = "Ontario Population Projection from 2021 to 2046 Divided \n into Low-Growth and High-Grows Scenario and \n Broken Down by Sex",
+      x = "Year",
+      y = "Projected Population")
+
+#https://stackoverflow.com/questions/64314968/several-labels-while-using-geom-text-function (adding values to bar's)
+      
+#https://stackoverflow.com/questions/52019721/border-around-bars-and-caterories-ggplot (border around bars)
+      
+#https://stackoverflow.com/questions/40675778/center-plot-title-in-ggplot2 (centering title)
+
+#https://www.statology.org/ggplot-facet-order/ (facet)
+
+
+
+
+
+#https://stackoverflow.com/questions/67414487/bold-axis-label-in-ggplot (axis font)
+
+#http://www.sthda.com/english/wiki/ggplot2-axis-ticks-a-guide-to-customize-tick-marks-and-labels (scale x and y)
+
+
+
+
+mutate(SCENARIO = factor(~SCENARIO, levels = c("REFERENCE", "LOW-GROWTH", "HIGH-GROWTH")))+
+
+scale_y_continuous(labels = scales::comma) +
